@@ -43,8 +43,37 @@ if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/mo
     log "Detected: $PI_MODEL"
 fi
 
+log "Checking for broken package manager state..."
+# Fix any interrupted package operations
+if dpkg --audit 2>/dev/null | grep -q .; then
+    log "Found interrupted package operations, fixing..."
+    dpkg --configure -a
+fi
+
+# Remove apt lock files if they exist (from previous crashes)
+for lock_file in /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock; do
+    if [ -f "$lock_file" ]; then
+        if ! fuser "$lock_file" >/dev/null 2>&1; then
+            log "Removing stale lock file: $lock_file"
+            rm -f "$lock_file"
+        fi
+    fi
+done
+
 log "Updating package lists..."
-apt-get update
+# Retry apt update up to 3 times in case of temporary failures
+for attempt in 1 2 3; do
+    if apt-get update; then
+        break
+    else
+        log "apt update failed (attempt $attempt/3)"
+        if [ $attempt -eq 3 ]; then
+            log "ERROR: Failed to update package lists after 3 attempts"
+            exit 1
+        fi
+        sleep 5
+    fi
+done
 
 log "Checking for available upgrades..."
 UPGRADES=$(apt list --upgradable 2>/dev/null | grep -c upgradable || true)
@@ -57,10 +86,18 @@ fi
 log "Found $UPGRADES packages to upgrade"
 
 log "Performing system upgrade..."
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+if ! DEBIAN_FRONTEND=noninteractive apt-get upgrade -y; then
+    log "WARNING: Some packages failed to upgrade, attempting to fix..."
+    apt-get install -f -y
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+fi
 
 log "Performing distribution upgrade..."
-DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+if ! DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y; then
+    log "WARNING: Distribution upgrade had issues, attempting to fix..."
+    apt-get install -f -y
+    DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+fi
 
 # Raspberry Pi specific: Update firmware if available
 if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then

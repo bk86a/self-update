@@ -2,6 +2,41 @@
 
 A comprehensive solution for keeping your Linux system up-to-date with automatic restart detection and optional automation.
 
+## Installation
+
+### Quick Install from GitHub
+
+```bash
+# Clone the repository
+git clone https://github.com/bk86a/self-update.git
+
+# Navigate to the directory
+cd self-update
+
+# Make scripts executable (if needed)
+chmod +x *.sh
+
+# Run your first update
+./quick_update.sh
+```
+
+### Alternative: Download ZIP
+
+If you don't have git installed:
+
+```bash
+# Download and extract
+wget https://github.com/bk86a/self-update/archive/main.zip
+unzip main.zip
+cd self-update-main
+
+# Make scripts executable
+chmod +x *.sh
+
+# Run update
+./quick_update.sh
+```
+
 ## Features
 
 - **Safe Updates**: Handles package updates, distribution upgrades, and cleanup
@@ -93,6 +128,9 @@ sudo systemctl stop auto-update.timer
 - **Root Check**: Ensures script runs with proper privileges
 - **Lock File**: Prevents multiple simultaneous update operations
 - **Error Handling**: Exits safely on errors with proper cleanup
+- **Package Recovery**: Automatically fixes interrupted package operations
+- **Lock File Recovery**: Removes stale apt lock files from crashed processes
+- **Retry Logic**: Retries failed operations with exponential backoff
 - **Logging**: Comprehensive logging of all operations
 - **Cancellable Restart**: 30-second countdown allows manual cancellation
 
@@ -161,6 +199,25 @@ ls -la /var/lock/system_update.lock
 ### Manual Lock Removal (if script crashed)
 ```bash
 sudo rm -f /var/lock/system_update.lock
+```
+
+### Fix Broken Package Manager
+If apt/dpkg is in a broken state:
+```bash
+sudo dpkg --configure -a
+sudo apt-get install -f
+```
+
+### Common Issues on Raspberry Pi
+```bash
+# If you get "git: command not found"
+sudo apt update && sudo apt install -y git
+
+# If you get permission denied
+chmod +x *.sh
+
+# If firmware update fails on Pi
+sudo SKIP_BACKUP=1 rpi-update
 ```
 
 ## Security Considerations

@@ -31,6 +31,18 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Detect system type and log for troubleshooting
+ARCHITECTURE=$(uname -m)
+DISTRO_ID=$(lsb_release -si 2>/dev/null || echo "Unknown")
+DISTRO_VERSION=$(lsb_release -sr 2>/dev/null || echo "Unknown")
+log "System: $DISTRO_ID $DISTRO_VERSION ($ARCHITECTURE)"
+
+# Check if this is a Raspberry Pi
+if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
+    PI_MODEL=$(tr -d '\0' < /proc/device-tree/model)
+    log "Detected: $PI_MODEL"
+fi
+
 log "Updating package lists..."
 apt-get update
 
@@ -49,6 +61,14 @@ DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 
 log "Performing distribution upgrade..."
 DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+
+# Raspberry Pi specific: Update firmware if available
+if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
+    if command -v rpi-update >/dev/null 2>&1; then
+        log "Updating Raspberry Pi firmware..."
+        SKIP_BACKUP=1 rpi-update
+    fi
+fi
 
 log "Cleaning up..."
 apt-get autoremove -y

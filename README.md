@@ -78,13 +78,15 @@ sudo systemctl stop auto-update.timer
 
 ## What the Script Does
 
-1. **Package List Update**: Refreshes package repositories
-2. **Upgrade Check**: Identifies available updates
-3. **System Upgrade**: Installs package updates
-4. **Distribution Upgrade**: Handles distribution-level updates
-5. **Cleanup**: Removes unnecessary packages and cleans cache
-6. **Restart Detection**: Checks if system restart is required
-7. **Automatic Restart**: Initiates restart with cancellable countdown
+1. **System Detection**: Identifies hardware (including Raspberry Pi models) and OS version
+2. **Package List Update**: Refreshes package repositories
+3. **Upgrade Check**: Identifies available updates
+4. **System Upgrade**: Installs package updates
+5. **Distribution Upgrade**: Handles distribution-level updates
+6. **Firmware Update**: Updates Raspberry Pi firmware (Pi devices only)
+7. **Cleanup**: Removes unnecessary packages and cleans cache
+8. **Restart Detection**: Checks if system restart is required
+9. **Automatic Restart**: Initiates restart with cancellable countdown
 
 ## Safety Features
 
@@ -101,9 +103,23 @@ sudo systemctl stop auto-update.timer
 
 ## Requirements
 
-- Ubuntu/Debian-based Linux distribution
+- Ubuntu/Debian-based Linux distribution (including Raspberry Pi OS)
 - Root privileges (sudo access)
 - `apt` package manager
+
+### Raspberry Pi Compatibility
+
+This script is fully compatible with Raspberry Pi devices running Raspberry Pi OS (Raspbian). The script automatically:
+
+- Detects Raspberry Pi hardware
+- Updates system packages via `apt`
+- Updates Raspberry Pi firmware via `rpi-update` (if available)
+- Handles ARM architecture specifics
+- Logs hardware detection for troubleshooting
+
+**Tested on:**
+- Raspberry Pi OS (32-bit and 64-bit)
+- All Raspberry Pi models (Pi 1, 2, 3, 4, 5, Zero series)
 
 ## Customization
 

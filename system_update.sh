@@ -99,11 +99,16 @@ if ! DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y; then
     DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 fi
 
-# Raspberry Pi specific: Update firmware if available
+# Raspberry Pi specific: Firmware update (only if explicitly enabled)
+# Note: rpi-update is NOT recommended for regular use and can break your system
+# Only enable if you have specific firmware issues to resolve
 if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
-    if command -v rpi-update >/dev/null 2>&1; then
-        log "Updating Raspberry Pi firmware..."
+    if [ "${RPI_UPDATE_FIRMWARE:-false}" = "true" ] && command -v rpi-update >/dev/null 2>&1; then
+        log "WARNING: Updating Raspberry Pi firmware (experimental/bleeding edge)"
+        log "This may cause instability - only use if you have specific firmware issues"
         SKIP_BACKUP=1 rpi-update
+    else
+        log "Skipping firmware update (use RPI_UPDATE_FIRMWARE=true to enable - NOT recommended)"
     fi
 fi
 

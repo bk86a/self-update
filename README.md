@@ -118,7 +118,7 @@ sudo systemctl stop auto-update.timer
 3. **Upgrade Check**: Identifies available updates
 4. **System Upgrade**: Installs package updates
 5. **Distribution Upgrade**: Handles distribution-level updates
-6. **Firmware Update**: Updates Raspberry Pi firmware (Pi devices only)
+6. **Firmware Update**: Optional Pi firmware update (disabled by default)
 7. **Cleanup**: Removes unnecessary packages and cleans cache
 8. **Restart Detection**: Checks if system restart is required
 9. **Automatic Restart**: Initiates restart with cancellable countdown
@@ -151,9 +151,27 @@ This script is fully compatible with Raspberry Pi devices running Raspberry Pi O
 
 - Detects Raspberry Pi hardware
 - Updates system packages via `apt`
-- Updates Raspberry Pi firmware via `rpi-update` (if available)
+- **Firmware updates are DISABLED by default** (see below)
 - Handles ARM architecture specifics
 - Logs hardware detection for troubleshooting
+
+### Raspberry Pi Firmware Updates
+
+**⚠️ IMPORTANT:** The script does NOT update Pi firmware by default because:
+- `rpi-update` installs bleeding-edge, experimental firmware
+- It can make your Pi unstable or unbootable
+- Regular `apt` updates include stable firmware updates
+
+**Only enable firmware updates if you have specific firmware issues:**
+
+```bash
+# Enable firmware updates (NOT recommended for most users)
+RPI_UPDATE_FIRMWARE=true ./quick_update.sh
+
+# Or set as environment variable
+export RPI_UPDATE_FIRMWARE=true
+./quick_update.sh
+```
 
 **Tested on:**
 - Raspberry Pi OS (32-bit and 64-bit)
@@ -216,8 +234,8 @@ sudo apt update && sudo apt install -y git
 # If you get permission denied
 chmod +x *.sh
 
-# If firmware update fails on Pi
-sudo SKIP_BACKUP=1 rpi-update
+# Enable firmware updates on Pi (only if needed for specific issues)
+RPI_UPDATE_FIRMWARE=true ./quick_update.sh
 ```
 
 ## Security Considerations

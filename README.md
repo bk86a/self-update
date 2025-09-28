@@ -244,7 +244,19 @@ RPI_UPDATE_FIRMWARE=true ./quick_update.sh
 - Lock file prevents concurrent executions
 - Non-interactive mode prevents hanging on prompts
 - Comprehensive logging for audit trails
+- All operations are logged for security auditing
+- No network connections beyond standard package repositories
+
+### Security Best Practices
+
+- **Always review scripts** before running with sudo privileges
+- **Test on non-critical systems** first
+- **Maintain backups** before running automated updates
+- **Monitor logs** in `/var/log/system_update.log`
+- **Use automation carefully** - consider your update schedule needs
 
 ## License
 
 This project is provided as-is for system administration purposes. Use at your own discretion and ensure you have proper backups before running automated updates on critical systems.
+
+**Disclaimer**: This software is provided "as is" without warranty. Users are responsible for testing and validating the software in their environment before production use.

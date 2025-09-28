@@ -10,12 +10,79 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
+remove_unused_updates() {
+    log "=== Starting cleanup of unused packages and cache ==="
+
+    # Check what will be removed before proceeding
+    AUTOREMOVE_PACKAGES=$(apt-get autoremove --dry-run 2>/dev/null | grep "^Remv " | wc -l || echo "0")
+    AUTOPURGE_PACKAGES=$(apt-get autopurge --dry-run 2>/dev/null | grep "^Purg " | wc -l || echo "0")
+
+    if [ "$AUTOREMOVE_PACKAGES" -gt 0 ]; then
+        log "Found $AUTOREMOVE_PACKAGES packages to autoremove"
+        if ! apt-get autoremove -y; then
+            log "WARNING: autoremove failed, attempting to fix broken packages..."
+            apt-get install -f -y
+            apt-get autoremove -y
+        fi
+    else
+        log "No packages to autoremove"
+    fi
+
+    if [ "$AUTOPURGE_PACKAGES" -gt 0 ]; then
+        log "Found $AUTOPURGE_PACKAGES packages to autopurge"
+        if ! apt-get autopurge -y; then
+            log "WARNING: autopurge failed, attempting to fix broken packages..."
+            apt-get install -f -y
+            apt-get autopurge -y
+        fi
+    else
+        log "No packages to autopurge"
+    fi
+
+    # Clean package cache
+    log "Cleaning package cache..."
+    apt-get autoclean
+
+    # Show disk space saved
+    log "Package cleanup completed"
+
+    log "=== Cleanup process finished ==="
+}
+
 cleanup() {
     rm -f "$LOCK_FILE"
     log "Cleanup completed"
 }
 
 trap cleanup EXIT
+
+# Handle command line arguments
+if [ "${1:-}" = "cleanup" ] || [ "${1:-}" = "--cleanup" ]; then
+    if [ "$EUID" -ne 0 ]; then
+        log "ERROR: This script must be run as root"
+        exit 1
+    fi
+
+    if [ -f "$LOCK_FILE" ]; then
+        log "Update already in progress (lock file exists)"
+        exit 1
+    fi
+
+    touch "$LOCK_FILE"
+    remove_unused_updates
+    exit 0
+elif [ "${1:-}" = "help" ] || [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "Usage: $0 [cleanup|--cleanup|help|--help|-h]"
+    echo ""
+    echo "Options:"
+    echo "  (no args)       Run full system update"
+    echo "  cleanup         Remove unused packages and clean cache (apt autoremove, autopurge, autoclean)"
+    echo "  help            Show this help message"
+    echo ""
+    echo "Environment variables:"
+    echo "  RPI_UPDATE_FIRMWARE=true    Enable Raspberry Pi firmware updates (NOT recommended)"
+    exit 0
+fi
 
 if [ -f "$LOCK_FILE" ]; then
     log "Update already in progress (lock file exists)"
@@ -125,9 +192,7 @@ if [ -f /proc/device-tree/model ] && grep -q "Raspberry Pi" /proc/device-tree/mo
     fi
 fi
 
-log "Cleaning up..."
-apt-get autoremove -y
-apt-get autoclean
+remove_unused_updates
 
 UPGRADE_END=$(date +%s)
 UPGRADE_DURATION=$((UPGRADE_END - UPGRADE_START))

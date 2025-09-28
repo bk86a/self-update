@@ -40,11 +40,13 @@ chmod +x *.sh
 ## Features
 
 - **Safe Updates**: Handles package updates, distribution upgrades, and cleanup
+- **Standalone Cleanup**: Remove unused packages without full updates (`cleanup` mode)
 - **Automatic Restart Detection**: Detects when system restart is required and handles it automatically
 - **Comprehensive Logging**: All operations logged to `/var/log/system_update.log`
 - **Lock Mechanism**: Prevents concurrent update operations
 - **Flexible Usage**: Run manually or set up automated daily updates
 - **Cancellable Restart**: 30-second countdown allows cancellation of automatic restart
+- **Enhanced Cleanup**: Advanced package removal with autoremove, autopurge, and autoclean
 
 ## Files Overview
 
@@ -72,6 +74,20 @@ The script will:
 3. Clean up unnecessary packages
 4. Automatically restart if required (with 30-second warning)
 
+### Cleanup Only
+
+Remove unused packages and clean cache without installing updates:
+
+```bash
+sudo ./system_update.sh cleanup
+```
+
+This performs:
+- `apt autoremove` - Remove unused packages
+- `apt autopurge` - Purge configuration files of removed packages
+- `apt autoclean` - Clean package cache
+- Safe operation with dry-run preview and error recovery
+
 ### Automated Daily Updates
 
 Set up automatic daily updates:
@@ -92,6 +108,12 @@ This installs a systemd timer that runs updates daily with a randomized delay (u
 
 # Or run directly as root
 sudo ./system_update.sh
+
+# Clean up unused packages only (no updates)
+sudo ./system_update.sh cleanup
+
+# Show help and usage options
+./system_update.sh help
 ```
 
 ### Automation Management
@@ -113,15 +135,23 @@ sudo systemctl stop auto-update.timer
 
 ## What the Script Does
 
+### Full Update Mode (default)
 1. **System Detection**: Identifies hardware (including Raspberry Pi models) and OS version
 2. **Package List Update**: Refreshes package repositories
 3. **Upgrade Check**: Identifies available updates
 4. **System Upgrade**: Installs package updates
 5. **Distribution Upgrade**: Handles distribution-level updates
 6. **Firmware Update**: Optional Pi firmware update (disabled by default)
-7. **Cleanup**: Removes unnecessary packages and cleans cache
+7. **Comprehensive Cleanup**: Removes unused packages and cleans cache
 8. **Restart Detection**: Checks if system restart is required
 9. **Automatic Restart**: Initiates restart with cancellable countdown
+
+### Cleanup Mode (`cleanup` option)
+1. **Package Cleanup**: Removes unused packages (`apt autoremove`)
+2. **Configuration Cleanup**: Purges leftover configuration files (`apt autopurge`)
+3. **Cache Cleanup**: Cleans package cache (`apt autoclean`)
+4. **Safe Operation**: Shows what will be removed before proceeding
+5. **Error Recovery**: Automatically fixes broken packages if cleanup fails
 
 ## Safety Features
 

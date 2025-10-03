@@ -236,7 +236,14 @@ ps aux | grep system_update
 
 ### View Recent Logs
 ```bash
+# View main log file
 sudo tail -f /var/log/system_update.log
+
+# View systemd service logs (if using automated updates)
+sudo journalctl -u auto-update.service -n 100
+
+# Check timer status
+sudo systemctl status auto-update.timer
 ```
 
 ### Check Lock File

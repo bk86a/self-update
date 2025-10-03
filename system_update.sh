@@ -14,8 +14,8 @@ remove_unused_updates() {
     log "=== Starting cleanup of unused packages and cache ==="
 
     # Check what will be removed before proceeding
-    AUTOREMOVE_PACKAGES=$(apt-get autoremove --dry-run 2>/dev/null | grep "^Remv " | wc -l || echo "0")
-    AUTOPURGE_PACKAGES=$(apt-get autopurge --dry-run 2>/dev/null | grep "^Purg " | wc -l || echo "0")
+    AUTOREMOVE_PACKAGES=$(apt-get autoremove --dry-run 2>/dev/null | grep -c "^Remv " || echo "0")
+    AUTOPURGE_PACKAGES=$(apt-get autopurge --dry-run 2>/dev/null | grep -c "^Purg " || echo "0")
 
     if [ "$AUTOREMOVE_PACKAGES" -gt 0 ]; then
         log "Found $AUTOREMOVE_PACKAGES packages to autoremove"

@@ -84,6 +84,11 @@ elif [ "${1:-}" = "help" ] || [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; th
     exit 0
 fi
 
+if [ "$EUID" -ne 0 ]; then
+    echo "ERROR: This script must be run as root (use: sudo $0)" >&2
+    exit 1
+fi
+
 if [ -f "$LOCK_FILE" ]; then
     log "Update already in progress (lock file exists)"
     exit 1
@@ -92,11 +97,6 @@ fi
 touch "$LOCK_FILE"
 
 log "=== Starting system update ==="
-
-if [ "$EUID" -ne 0 ]; then
-    log "ERROR: This script must be run as root"
-    exit 1
-fi
 
 # Detect system type and log for troubleshooting
 ARCHITECTURE=$(uname -m)
